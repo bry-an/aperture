@@ -27,7 +27,7 @@ export const startCommand = async (ctx: Context) => {
     }
 
     // Welcome message
-    const welcomeMessage = `Welcome to Aperture 👋\n\nI'm your AI-powered news assistant. Here's what I can do:\n\n📰 /brief - Get your daily news brief\n📋 /topics - View your saved topics\n➕ /add_topic <topic> - Add a new topic\n➖ /remove_topic <topic> - Remove a topic\n\nYour preferences have been saved! Type /brief to see today's top content.`;
+    const welcomeMessage = `Welcome to Aperture 👋\n\nI'm your AI-powered news assistant. Here's what I can do:\n\n📰 /brief - Get your daily news brief based on your interests\n📋 /topics - View your saved topics\n➕ /add_topic <topic> - Add a new topic\n➖ /remove_topic <topic> - Remove a topic\n\nYour preferences have been saved! Type /brief to see today's top content.`;
 
     await ctx.reply(welcomeMessage);
 

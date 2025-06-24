@@ -1,0 +1,8 @@
+---
+description: Always include root-level todo.md in prompt context
+globs:
+  - '**/*'
+alwaysApply: true
+---
+
+Please always include the contents of `@todo.md` in the context for any request.

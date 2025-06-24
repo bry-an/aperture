@@ -1,5 +1,27 @@
 # Aperture MVP Task Breakdown
 
+## 🧭 Aperture: Product Overview
+
+### Core Thesis
+
+Aperture helps you stay informed and go deep — by turning scattered content into personalized, actionable insight.
+
+It’s a curation engine and knowledge assistant that:
+	-	Delivers daily, AI-summarized briefs of your topics
+	-	Surfaces longform reading, podcasts, and videos
+	-	Tracks in-progress content and helps you resume intelligently
+	-	Allows both wide-angle scanning and deep focus dives
+
+### Target User
+	-	Knowledge workers, researchers, builders, creators
+	-	Struggling with info overload and shallow scrolling
+	-	Want to use AI to focus, not distract
+
+### Key Use Cases
+	1.	5-Minute Cortado Catchup → Tap /brief and instantly get updated
+	2.	Daily Digest Ritual → Recap of what’s new and what’s unfinished
+	3.	Deep Dive Mode → Resume that podcast, finish that paper, return to a longform article you didn’t finish last night
+
 ## ⚙️ PHASE 1: Scaffolding & Command Layer
 
 ### 🌟 Goal: Users can interact with a Telegram bot and manage topic interests
