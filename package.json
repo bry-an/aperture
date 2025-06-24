@@ -6,20 +6,31 @@
     "start": "ts-node src/index.ts",
     "dev": "ts-node-dev src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:diff": "supabase db diff",
+    "migration:new": "supabase migration new",
+    "migration:up": "supabase migration up",
+    "migration:down": "supabase migration down"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "grammy": "^1.21.1",
-    "dotenv": "^16.3.1"
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^16.3.1",
+    "grammy": "^1.21.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
+    "supabase": "^2.26.9",
     "ts-node": "^10.9.0",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.0"
   }
 }

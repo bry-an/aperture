@@ -1,12 +1,14 @@
 // clarity-bot/src/index.ts
 import { Bot } from "grammy";
 import { config } from "dotenv";
+import { supabase } from "./lib/supabase";
 
 // Load environment variables
 config();
 
 import { briefCommand } from "./commands/brief";
 import { topicsCommand, addTopicCommand, removeTopicCommand } from "./commands/topics";
+import { startCommand } from "./commands/start";
 
 // Check if BOT_TOKEN is available
 if (!process.env.BOT_TOKEN) {
@@ -18,11 +20,13 @@ if (!process.env.BOT_TOKEN) {
 const bot = new Bot(process.env.BOT_TOKEN);
 
 // Register core commands
-bot.command("start", (ctx) => ctx.reply("Welcome to Clarity 👋 Type /brief to see today's top content."));
+bot.command("start", startCommand);
 bot.command("brief", briefCommand);
 bot.command("topics", topicsCommand);
 bot.command("add_topic", addTopicCommand);
 bot.command("remove_topic", removeTopicCommand);
 
-console.log("🤖 Clarity Bot is starting...");
+// Sample query: fetch all users from the users table
+
+console.log("🤖 Aperture Bot is starting...");
 bot.start();
