@@ -81,6 +81,7 @@ export interface Database {
           name: string
           description: string | null
           url: string
+          type: 'rss' | 'web' | 'youtube' | 'podcast'
           embedding: number[] | null
         }
         Insert: {
@@ -88,6 +89,7 @@ export interface Database {
           name: string
           description?: string | null
           url: string
+          type?: 'rss' | 'web' | 'youtube' | 'podcast'
           embedding?: number[] | null
         }
         Update: {
@@ -95,6 +97,7 @@ export interface Database {
           name?: string
           description?: string | null
           url?: string
+          type?: 'rss' | 'web' | 'youtube' | 'podcast'
           embedding?: number[] | null
         }
       }

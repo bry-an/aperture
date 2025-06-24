@@ -40,12 +40,38 @@ It’s a curation engine and knowledge assistant that:
 
 ### 🌟 Goal: Background agents curate content from interest feeds
 
-- [ ] Set up a basic topic-to-feed mapping (hardcoded or in Supabase)
-- [ ] Ingest RSS feeds via polling (e.g., node-cron + `rss-parser`)
-- [ ] Summarize each article using GPT-4o or Claude via API
-- [ ] Store summaries in Supabase (`summaries` table: id, topic, content, source_url, etc.)
-- [ ] Ensure deduping / rate-limiting of fetches per source
-- [ ] (Optional) Use Readability/Puppeteer to extract full article content for better summarization
+### Step 1: Schema + Embeddings Infrastructure
+- [x] Add `content_sources` table to Supabase
+- [x] Add `embedding` field to `topics` table
+- [x] Integrate OpenAI API for `text-embedding-3-small`
+- [x] Generate embeddings on topic creation and store in DB
+- [x] Create SQL function for cosine similarity search on embeddings
+
+### Step 2: Feed Ingestion
+- [ ] Define and store initial RSS feeds in `content_sources`
+  - [ ] Include `url`, `name`, `description`, `source_type`, `embedding`
+  - [ ] Add seed content sources (e.g., JAMA, NYT Health, Hacker News)
+- [ ] Build feed puller
+  - [ ] RSS parsing worker (Node script or Supabase function)
+  - [ ] Store raw articles in `raw_content` table
+  - [ ] De-duplicate content
+
+### Step 3: Matching Content to Topics
+- [ ] Generate embeddings for new articles
+- [ ] Use cosine similarity to match articles to user topics
+- [ ] Store matched content in `topic_matches` table
+
+### Step 4: Summarization Pipeline
+- [ ] Generate summaries for matched articles
+  - [ ] Use GPT-4o / Claude Opus API for summarization
+  - [ ] Store summaries in `summaries` table linked to raw content
+- [ ] Add support for basic categorization tags (e.g. "quick", "deep dive")
+
+### Step 5: Delivery via Telegram
+- [ ] Extend `/brief` command to query for latest summaries
+  - [ ] Filter by `user_topics` and `published_at`
+  - [ ] Prioritize quick reads vs longform
+  - [ ] Format nicely in Telegram message block
 
 ---
 
