@@ -48,9 +48,10 @@ It’s a curation engine and knowledge assistant that:
 - [x] Create SQL function for cosine similarity search on embeddings
 
 ### Step 2: Feed Ingestion
-- [ ] Define and store initial RSS feeds in `content_sources`
-  - [ ] Include `url`, `name`, `description`, `source_type`, `embedding`
-  - [ ] Add seed content sources (e.g., JAMA, NYT Health, Hacker News)
+- [x] Define and store initial RSS feeds in `content_sources`
+  - [x] Include `url`, `name`, `description`, `source_type`, `embedding`
+  - [x] Add seed content sources (e.g., JAMA, NYT Health, Hacker News)
+  - [ ] Create topic_sources record when new topic added
 - [ ] Build feed puller
   - [ ] RSS parsing worker (Node script or Supabase function)
   - [ ] Store raw articles in `raw_content` table

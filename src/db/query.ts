@@ -170,6 +170,27 @@ export const addTopic = async (telegramId: number, topic: string): Promise<Topic
       };
     }
 
+    // If we have an embedding, try to match this topic to content sources
+    if (embedding && data) {
+      try {
+        const matchResult = await matchTopicToSources(data.id, embedding);
+        if (matchResult.success && matchResult.data) {
+          if (matchResult.data.count > 0) {
+            console.log(`Matched topic "${normalizedTopic}" to ${matchResult.data.count} content sources (threshold: ${(matchResult.data.thresholdUsed * 100).toFixed(0)}%)`);
+          } else if (matchResult.data.noMatchesFound) {
+            console.log(`No content sources matched for topic "${normalizedTopic}" even with lowest threshold`);
+          } else {
+            console.log(`No content sources matched for topic "${normalizedTopic}"`);
+          }
+        } else {
+          console.error(`Error matching topic "${normalizedTopic}" to sources:`, matchResult.error);
+        }
+      } catch (matchError) {
+        console.error(`Error in similarity search for topic "${normalizedTopic}":`, matchError);
+        // Don't fail the topic creation if similarity search fails
+      }
+    }
+
     return {
       success: true,
       data,
@@ -374,6 +395,139 @@ export const updateTopicEmbeddings = async (telegramId?: number): Promise<TopicR
     };
   } catch (error) {
     console.error("Unexpected error in updateTopicEmbeddings:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+};
+
+/**
+ * Match a topic to content sources using similarity search and create topic_sources records
+ * @param topicId - Topic ID
+ * @param topicEmbedding - Topic embedding vector
+ * @param matchThreshold - Similarity threshold (default: 0.7)
+ * @param matchCount - Maximum number of matches (default: 5)
+ * @returns Promise<TopicResult>
+ */
+export const matchTopicToSources = async (
+  topicId: string,
+  topicEmbedding: number[],
+  matchThreshold: number = 0.7,
+  matchCount: number = 5
+): Promise<TopicResult> => {
+  try {
+    // Define thresholds to try, starting with the provided threshold
+    const thresholds = [matchThreshold, 0.6, 0.5, 0.3, 0.2];
+    
+    for (const threshold of thresholds) {
+      console.log(`🔍 Trying similarity threshold: ${threshold} (${(threshold * 100).toFixed(0)}%)`);
+      
+      // Use the match_sources function to find similar content sources
+      const { data: matches, error } = await supabase
+        .rpc('match_sources', {
+          query_embedding: topicEmbedding,
+          match_threshold: 1 - threshold, // Convert threshold (match_sources uses distance, we want similarity)
+          match_count: matchCount
+        });
+
+      if (error) {
+        console.error("Error matching topic to sources:", error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      if (matches && matches.length > 0) {
+        console.log(`✅ Found ${matches.length} matches with threshold ${threshold}`);
+        
+        // Create topic_sources records for each match
+        const topicSourceRecords = matches.map((match: any) => ({
+          topic_id: topicId,
+          source_id: match.id,
+        }));
+
+        const { data: insertedRecords, error: insertError } = await supabase
+          .from("topic_sources")
+          .insert(topicSourceRecords)
+          .select("*, content_sources(*)");
+
+        if (insertError) {
+          console.error("Error creating topic_sources records:", insertError);
+          return {
+            success: false,
+            error: insertError.message,
+          };
+        }
+
+        return {
+          success: true,
+          data: {
+            matches: insertedRecords,
+            count: insertedRecords.length,
+            thresholdUsed: threshold,
+          },
+        };
+      }
+      
+      console.log(`ℹ️ No matches found with threshold ${threshold}`);
+    }
+
+    // If we get here, no matches were found with any threshold
+    console.log(`❌ No content sources matched even with the lowest threshold (0.2)`);
+    return {
+      success: true,
+      data: {
+        matches: [],
+        count: 0,
+        thresholdUsed: 0.2,
+        noMatchesFound: true,
+      },
+    };
+  } catch (error) {
+    console.error("Unexpected error in matchTopicToSources:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+};
+
+/**
+ * Get content sources matched to a specific topic
+ * @param topicId - Topic ID
+ * @returns Promise<TopicResult>
+ */
+export const getTopicSources = async (topicId: string): Promise<TopicResult> => {
+  try {
+    const { data, error } = await supabase
+      .from("topic_sources")
+      .select(`
+        *,
+        content_sources (
+          id,
+          name,
+          description,
+          url
+        )
+      `)
+      .eq("topic_id", topicId);
+
+    if (error) {
+      console.error("Error getting topic sources:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    console.error("Unexpected error in getTopicSources:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

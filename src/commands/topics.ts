@@ -1,5 +1,5 @@
 import { Context } from "grammy";
-import { addTopic, upsertUser, getUserTopics, removeTopic } from "../db/query";
+import { addTopic, upsertUser, getUserTopics, removeTopic, getTopicSources } from "../db/query";
 
 export const topicsCommand = async (ctx: Context) => {
   // Ensure user exists in database
@@ -31,8 +31,27 @@ export const topicsCommand = async (ctx: Context) => {
     return;
   }
 
-  // Format topics list
-  const topicsList = topics.map((topic: any) => `• ${topic.topic}`).join('\n');
+  // Get matched sources for each topic
+  const topicsWithSources = await Promise.all(
+    topics.map(async (topic: any) => {
+      const sourcesResult = await getTopicSources(topic.id);
+      const sources = sourcesResult.success ? sourcesResult.data : [];
+      return {
+        ...topic,
+        sources: sources || []
+      };
+    })
+  );
+
+  // Format topics list with sources
+  const topicsList = topicsWithSources.map((topic: any) => {
+    const sourceCount = topic.sources.length;
+    const sourceText = sourceCount > 0 
+      ? ` (${sourceCount} source${sourceCount !== 1 ? 's' : ''})`
+      : ' (no sources yet)';
+    return `• ${topic.topic}${sourceText}`;
+  }).join('\n');
+
   await ctx.reply(`📋 Your current topics:\n\n${topicsList}\n\nUse /add_topic <topic> to add more interests!\nUse /remove_topic <topic> if you're no longer interested in something.`);
 };
 
@@ -66,9 +85,21 @@ export const addTopicCommand = async (ctx: Context) => {
   }
 
   if (result.isNew) {
-    await ctx.reply(`Alright, we're now interested in ${topic} for you! We'll keep tabs on it going forward.`);
+    // Get the matched sources for this new topic
+    let sourceInfo = "";
+    if (result.data && result.data.id) {
+      const sourcesResult = await getTopicSources(result.data.id);
+      if (sourcesResult.success && sourcesResult.data && sourcesResult.data.length > 0) {
+        const sourceCount = sourcesResult.data.length;
+        sourceInfo = `\n\n🔍 I've found ${sourceCount} content source${sourceCount !== 1 ? 's' : ''} that match your interest in "${topic}". We'll start tracking relevant content from these sources for you!`;
+      } else {
+        sourceInfo = `\n\n🔍 I searched through our content sources but couldn't find any that closely match "${topic}". We'll keep an eye out for relevant content as we add more sources to our database.`;
+      }
+    }
+    
+    await ctx.reply(`✅ Alright, we're now interested in "${topic}" for you! We'll keep tabs on it going forward.${sourceInfo}`);
   } else {
-    await ctx.reply(`We're already keeping tabs on ${topic} for you. Type /topics to see your current topics.`);
+    await ctx.reply(`ℹ️ We're already keeping tabs on "${topic}" for you. Type /topics to see your current topics.`);
   }
 };
 
