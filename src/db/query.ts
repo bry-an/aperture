@@ -214,4 +214,73 @@ export const getUserTopics = async (telegramId: number): Promise<TopicResult> =>
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
+};
+
+/**
+ * Remove a topic for a user
+ * @param telegramId - Telegram user ID
+ * @param topic - Topic to remove (will be lowercased)
+ * @returns Promise<TopicResult>
+ */
+export const removeTopic = async (telegramId: number, topic: string): Promise<TopicResult> => {
+  try {
+    // First get the user
+    const userResult = await getUserByTelegramId(telegramId);
+    if (!userResult.success || !userResult.data) {
+      return {
+        success: false,
+        error: "User not found",
+      };
+    }
+
+    const normalizedTopic = topic.toLowerCase().trim();
+    
+    // Check if topic exists
+    const { data: existingTopic, error: checkError } = await supabase
+      .from("topics")
+      .select("*")
+      .eq("user_id", userResult.data.id)
+      .eq("topic", normalizedTopic)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') { // PGRST116 is "not found"
+        return {
+          success: false,
+          error: "Topic not found",
+        };
+      }
+      console.error("Error checking existing topic:", checkError);
+      return {
+        success: false,
+        error: checkError.message,
+      };
+    }
+
+    // Remove the topic
+    const { error: deleteError } = await supabase
+      .from("topics")
+      .delete()
+      .eq("user_id", userResult.data.id)
+      .eq("topic", normalizedTopic);
+
+    if (deleteError) {
+      console.error("Error removing topic:", deleteError);
+      return {
+        success: false,
+        error: deleteError.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: existingTopic,
+    };
+  } catch (error) {
+    console.error("Unexpected error in removeTopic:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
 }; 
