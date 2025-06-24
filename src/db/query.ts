@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { generateEmbedding } from "../lib/openai";
 
 export interface UserData {
   telegram_id: number;
@@ -141,12 +142,22 @@ export const addTopic = async (telegramId: number, topic: string): Promise<Topic
       };
     }
 
-    // Add new topic
+    // Generate embedding for the topic
+    let embedding: number[] | null = null;
+    try {
+      embedding = await generateEmbedding(normalizedTopic);
+    } catch (embeddingError) {
+      console.error("Error generating embedding for topic:", embeddingError);
+      // Continue without embedding - topic will still be saved
+    }
+
+    // Add new topic with embedding
     const { data, error } = await supabase
       .from("topics")
       .insert({
         user_id: userResult.data.id,
         topic: normalizedTopic,
+        embedding: embedding,
       })
       .select()
       .single();
@@ -278,6 +289,91 @@ export const removeTopic = async (telegramId: number, topic: string): Promise<To
     };
   } catch (error) {
     console.error("Unexpected error in removeTopic:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+};
+
+/**
+ * Update embeddings for topics that don't have them
+ * @param telegramId - Telegram user ID (optional, if not provided updates all users)
+ * @returns Promise<TopicResult>
+ */
+export const updateTopicEmbeddings = async (telegramId?: number): Promise<TopicResult> => {
+  try {
+    let query = supabase
+      .from("topics")
+      .select("id, topic, user_id")
+      .is("embedding", null);
+
+    // If telegramId is provided, filter by user
+    if (telegramId) {
+      const userResult = await getUserByTelegramId(telegramId);
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: "User not found",
+        };
+      }
+      query = query.eq("user_id", userResult.data.id);
+    }
+
+    const { data: topicsWithoutEmbeddings, error } = await query;
+
+    if (error) {
+      console.error("Error fetching topics without embeddings:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    if (!topicsWithoutEmbeddings || topicsWithoutEmbeddings.length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    // Generate embeddings for all topics
+    const updatePromises = topicsWithoutEmbeddings.map(async (topic) => {
+      try {
+        const embedding = await generateEmbedding(topic.topic);
+        
+        const { error: updateError } = await supabase
+          .from("topics")
+          .update({ embedding })
+          .eq("id", topic.id);
+
+        if (updateError) {
+          console.error(`Error updating embedding for topic ${topic.id}:`, updateError);
+          return { success: false, topicId: topic.id, error: updateError.message };
+        }
+
+        return { success: true, topicId: topic.id };
+      } catch (embeddingError) {
+        console.error(`Error generating embedding for topic ${topic.id}:`, embeddingError);
+        return { success: false, topicId: topic.id, error: "Failed to generate embedding" };
+      }
+    });
+
+    const results = await Promise.all(updatePromises);
+    const successful = results.filter(r => r.success);
+    const failed = results.filter(r => !r.success);
+
+    return {
+      success: true,
+      data: {
+        total: topicsWithoutEmbeddings.length,
+        successful: successful.length,
+        failed: failed.length,
+        failedTopics: failed,
+      },
+    };
+  } catch (error) {
+    console.error("Unexpected error in updateTopicEmbeddings:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

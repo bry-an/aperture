@@ -30,9 +30,9 @@ It’s a curation engine and knowledge assistant that:
 - [x] Stub `/brief`, `/topics`, `/add_topic`, `/remove_topic`
 - [x] Set up Supabase project
 - [x] Create `users` and `topics` tables
-- [ ] Implement `/add_topic` to persist a topic to the user
-- [ ] Implement `/topics` to list current interests
-- [ ] Implement `/remove_topic` to delete from interests
+- [x] Implement `/add_topic` to persist a topic to the user
+- [x] Implement `/topics` to list current interests
+- [x] Implement `/remove_topic` to delete from interests
 
 ---
 

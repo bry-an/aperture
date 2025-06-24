@@ -58,19 +58,75 @@ export interface Database {
           user_id: string
           topic: string
           created_at: string
+          embedding: number[] | null
         }
         Insert: {
           id?: string
           user_id: string
           topic: string
           created_at?: string
+          embedding?: number[] | null
         }
         Update: {
           id?: string
           user_id?: string
           topic?: string
           created_at?: string
+          embedding?: number[] | null
         }
+      }
+      content_sources: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          url: string
+          embedding: number[] | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          url: string
+          embedding?: number[] | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          url?: string
+          embedding?: number[] | null
+        }
+      }
+      topic_sources: {
+        Row: {
+          topic_id: string
+          source_id: string
+        }
+        Insert: {
+          topic_id: string
+          source_id: string
+        }
+        Update: {
+          topic_id?: string
+          source_id?: string
+        }
+      }
+    }
+    Functions: {
+      match_sources: {
+        Args: {
+          query_embedding: number[]
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string | null
+          url: string
+          similarity: number
+        }[]
       }
     }
   }
