@@ -51,7 +51,7 @@ It’s a curation engine and knowledge assistant that:
 - [x] Define and store initial RSS feeds in `content_sources`
   - [x] Include `url`, `name`, `description`, `source_type`, `embedding`
   - [x] Add seed content sources (e.g., JAMA, NYT Health, Hacker News)
-  - [ ] Create topic_sources record when new topic added
+  - [x] Create topic_sources record when new topic added
 - [ ] Build feed puller
   - [ ] RSS parsing worker (Node script or Supabase function)
   - [ ] Store raw articles in `raw_content` table

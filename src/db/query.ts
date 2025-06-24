@@ -533,4 +533,61 @@ export const getTopicSources = async (topicId: string): Promise<TopicResult> => 
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
+};
+
+/**
+ * Add a new content source to the database
+ * @param sourceData - Content source data
+ * @returns Promise<TopicResult>
+ */
+export const addContentSource = async (sourceData: {
+  name: string;
+  url: string;
+  description: string;
+  type: 'rss' | 'youtube' | 'podcast' | 'web';
+}): Promise<TopicResult> => {
+  try {
+    // Generate embedding for the content source
+    const embeddingText = `${sourceData.name}. ${sourceData.description || ''} (${sourceData.url})`;
+    let embedding: number[] | null = null;
+    
+    try {
+      embedding = await generateEmbedding(embeddingText);
+    } catch (embeddingError) {
+      console.error("Error generating embedding for content source:", embeddingError);
+      // Continue without embedding - source will still be saved
+    }
+
+    // Insert the content source
+    const { data, error } = await supabase
+      .from("content_sources")
+      .insert({
+        name: sourceData.name,
+        description: sourceData.description,
+        url: sourceData.url,
+        type: sourceData.type,
+        embedding: embedding,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error adding content source:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    console.error("Unexpected error in addContentSource:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
 }; 
